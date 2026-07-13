@@ -4,9 +4,6 @@ import os
 import tempfile
 from pathlib import Path
 
-import requests
-import zipfile
-import io
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
@@ -18,27 +15,18 @@ from aiogram.enums import ParseMode
 TOKEN = "8965561787:AAFLh8gu66APc161B2jjhzBpbEdDVi78oPA"
 
 # ============================================================================
-# АВТО-ЗАГРУЗКА libparser.so ИЗ RELEASE
+# ЗАГРУЗКА libparser.so (ПРЯМОЙ ПУТЬ)
 # ============================================================================
-LIB_PATH = os.path.join(os.path.dirname(__file__), "libparser.so")
+LIB_PATH = "/app/libparser.so"
 
+# Выводим список файлов для отладки
+print("📂 Files in /app:", os.listdir("/app") if os.path.exists("/app") else "No /app dir")
+
+# Проверяем наличие и загружаем
 if not os.path.exists(LIB_PATH):
-    print("[INFO] libparser.so not found. Downloading from GitHub release...")
-    try:
-        url = "https://github.com/webline1488-twink/RageEngine/releases/download/v1.0.1/libparser.zip"
-        response = requests.get(url, timeout=60)
-        response.raise_for_status()
+    print(f"[ERROR] libparser.so not found at {LIB_PATH}")
+    exit(1)
 
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-            with open(LIB_PATH, "wb") as f:
-                f.write(z.read("libparser.so"))
-
-        print("[SUCCESS] libparser.so downloaded and extracted!")
-    except Exception as e:
-        print(f"[ERROR] Failed to download/extract: {e}")
-        exit(1)
-
-# Загружаем библиотеку
 try:
     lib = ctypes.CDLL(LIB_PATH)
     print(f"[OK] libparser.so loaded from {LIB_PATH}")
