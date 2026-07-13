@@ -26,7 +26,7 @@ if not os.path.exists(LIB_PATH):
     exit(1)
 
 try:
-    lib = ctypes.CDLL(LIB_PATH)
+    lib = ctypes.CDLL(LIB_PATH, mode=ctypes.RTLD_GLOBAL)
     print(f"[OK] libparser.so loaded from {LIB_PATH}")
 except OSError as e:
     print(f"[ERROR] Failed to load libparser.so: {e}")
