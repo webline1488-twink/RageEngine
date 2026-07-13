@@ -15,14 +15,12 @@ from aiogram.enums import ParseMode
 TOKEN = "8965561787:AAFLh8gu66APc161B2jjhzBpbEdDVi78oPA"
 
 # ============================================================================
-# ЗАГРУЗКА libparser.so (ПРЯМОЙ ПУТЬ)
+# ЗАГРУЗКА libparser.so (С LOCAL СИМВОЛАМИ)
 # ============================================================================
 LIB_PATH = "/app/libparser.so"
 
-# Выводим список файлов для отладки
 print("📂 Files in /app:", os.listdir("/app") if os.path.exists("/app") else "No /app dir")
 
-# Проверяем наличие и загружаем
 if not os.path.exists(LIB_PATH):
     print(f"[ERROR] libparser.so not found at {LIB_PATH}")
     exit(1)
@@ -34,15 +32,39 @@ except OSError as e:
     print(f"[ERROR] Failed to load libparser.so: {e}")
     exit(1)
 
-# Настройка функций
-lib.parse_ydr.argtypes = [ctypes.c_char_p]
-lib.parse_ydr.restype = ctypes.c_char_p
+# ============================================================================
+# ИСПОЛЬЗУЕМ Mangled имена (LOCAL символы)
+# ============================================================================
 
-lib.parse_ydd.argtypes = [ctypes.c_char_p]
-lib.parse_ydd.restype = ctypes.c_char_p
+# parse_ydr — LOCAL символ
+_parse_ydr = lib._Z10parse_ydrPKc
+_parse_ydr.argtypes = [ctypes.c_char_p]
+_parse_ydr.restype = ctypes.c_char_p
 
-lib.parse_yft.argtypes = [ctypes.c_char_p]
-lib.parse_yft.restype = ctypes.c_char_p
+# parse_ydd — LOCAL символ
+_parse_ydd = lib._Z10parse_yddPKc
+_parse_ydd.argtypes = [ctypes.c_char_p]
+_parse_ydd.restype = ctypes.c_char_p
+
+# parse_yft — LOCAL символ
+_parse_yft = lib._Z10parse_yftPKc
+_parse_yft.argtypes = [ctypes.c_char_p]
+_parse_yft.restype = ctypes.c_char_p
+
+def parse_ydr(path: str) -> str:
+    """Обёртка для parse_ydr"""
+    result = _parse_ydr(path.encode())
+    return result.decode() if result else ""
+
+def parse_ydd(path: str) -> str:
+    """Обёртка для parse_ydd"""
+    result = _parse_ydd(path.encode())
+    return result.decode() if result else ""
+
+def parse_yft(path: str) -> str:
+    """Обёртка для parse_yft"""
+    result = _parse_yft(path.encode())
+    return result.decode() if result else ""
 
 # ============================================================================
 # БОТ
@@ -100,11 +122,11 @@ async def handle_file(message: Message):
         await bot.download(doc, file_path)
 
         if ext == '.ydr':
-            result = lib.parse_ydr(file_path.encode()).decode()
+            result = parse_ydr(file_path)
         elif ext == '.ydd':
-            result = lib.parse_ydd(file_path.encode()).decode()
+            result = parse_ydd(file_path)
         elif ext == '.yft':
-            result = lib.parse_yft(file_path.encode()).decode()
+            result = parse_yft(file_path)
         else:
             result = "❌ Неизвестный формат"
 
