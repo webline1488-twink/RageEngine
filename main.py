@@ -4,6 +4,9 @@ import os
 import tempfile
 from pathlib import Path
 
+import requests
+import zipfile
+import io
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
@@ -15,17 +18,35 @@ from aiogram.enums import ParseMode
 TOKEN = "8965561787:AAFLh8gu66APc161B2jjhzBpbEdDVi78oPA"
 
 # ============================================================================
-# ЗАГРУЗКА C++ LIBRARY
+# АВТО-ЗАГРУЗКА libparser.so ИЗ RELEASE
 # ============================================================================
 LIB_PATH = os.path.join(os.path.dirname(__file__), "libparser.so")
 
 if not os.path.exists(LIB_PATH):
-    print(f"[ERROR] libparser.so not found at {LIB_PATH}")
-    print("Please copy libparser.so to ~/")
+    print("[INFO] libparser.so not found. Downloading from GitHub release...")
+    try:
+        url = "https://github.com/webline1488-twink/RageEngine/releases/download/v1.0.1/libparser.zip"
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+
+        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+            with open(LIB_PATH, "wb") as f:
+                f.write(z.read("libparser.so"))
+
+        print("[SUCCESS] libparser.so downloaded and extracted!")
+    except Exception as e:
+        print(f"[ERROR] Failed to download/extract: {e}")
+        exit(1)
+
+# Загружаем библиотеку
+try:
+    lib = ctypes.CDLL(LIB_PATH)
+    print(f"[OK] libparser.so loaded from {LIB_PATH}")
+except OSError as e:
+    print(f"[ERROR] Failed to load libparser.so: {e}")
     exit(1)
 
-lib = ctypes.CDLL(LIB_PATH)
-
+# Настройка функций
 lib.parse_ydr.argtypes = [ctypes.c_char_p]
 lib.parse_ydr.restype = ctypes.c_char_p
 
@@ -74,7 +95,6 @@ async def handle_file(message: Message):
     doc = message.document
     filename = doc.file_name or "file"
 
-    # Проверяем расширение
     ext = Path(filename).suffix.lower()
     if ext not in ['.ydd', '.ydr', '.yft']:
         await message.answer(
@@ -83,17 +103,14 @@ async def handle_file(message: Message):
         )
         return
 
-    # Отправляем статус
     status_msg = await message.answer(f"⏳ Парсинг {filename}...")
 
     try:
-        # Скачиваем файл во временную папку
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             file_path = tmp.name
         
         await bot.download(doc, file_path)
 
-        # Парсим
         if ext == '.ydr':
             result = lib.parse_ydr(file_path.encode()).decode()
         elif ext == '.ydd':
@@ -103,14 +120,11 @@ async def handle_file(message: Message):
         else:
             result = "❌ Неизвестный формат"
 
-        # Удаляем временный файл
         os.unlink(file_path)
 
-        # Отвечаем
         if result.startswith("Error:"):
             await status_msg.edit_text(f"❌ {result}")
         else:
-            # Если результат слишком длинный - отправляем файлом
             if len(result) > 4000:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as txt:
                     txt_path = txt.name
