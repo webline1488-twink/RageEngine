@@ -17,7 +17,7 @@ TOKEN = "8965561787:AAFLh8gu66APc161B2jjhzBpbEdDVi78oPA"
 # ============================================================================
 # ЗАГРУЗКА C++ LIBRARY
 # ============================================================================
-LIB_PATH = os.path.expanduser("~/libparser.so")
+LIB_PATH = os.path.join(os.path.dirname(__file__), "libparser.so")
 
 if not os.path.exists(LIB_PATH):
     print(f"[ERROR] libparser.so not found at {LIB_PATH}")
