@@ -15,7 +15,7 @@ from aiogram.enums import ParseMode
 TOKEN = "8965561787:AAFLh8gu66APc161B2jjhzBpbEdDVi78oPA"
 
 # ============================================================================
-# ЗАГРУЗКА libparser.so (С LOCAL СИМВОЛАМИ)
+# ЗАГРУЗКА libparser.so (LOCAL СИМВОЛЫ)
 # ============================================================================
 LIB_PATH = "/app/libparser.so"
 
@@ -33,36 +33,33 @@ except OSError as e:
     exit(1)
 
 # ============================================================================
-# ИСПОЛЬЗУЕМ Mangled имена (LOCAL символы)
+# ИСПОЛЬЗУЕМ LOCAL СИМВОЛЫ (без mangled)
 # ============================================================================
 
 # parse_ydr — LOCAL символ
-_parse_ydr = lib._Z10parse_ydrPKc
+_parse_ydr = lib.parse_ydr
 _parse_ydr.argtypes = [ctypes.c_char_p]
 _parse_ydr.restype = ctypes.c_char_p
 
 # parse_ydd — LOCAL символ
-_parse_ydd = lib._Z10parse_yddPKc
+_parse_ydd = lib.parse_ydd
 _parse_ydd.argtypes = [ctypes.c_char_p]
 _parse_ydd.restype = ctypes.c_char_p
 
 # parse_yft — LOCAL символ
-_parse_yft = lib._Z10parse_yftPKc
+_parse_yft = lib.parse_yft
 _parse_yft.argtypes = [ctypes.c_char_p]
 _parse_yft.restype = ctypes.c_char_p
 
 def parse_ydr(path: str) -> str:
-    """Обёртка для parse_ydr"""
     result = _parse_ydr(path.encode())
     return result.decode() if result else ""
 
 def parse_ydd(path: str) -> str:
-    """Обёртка для parse_ydd"""
     result = _parse_ydd(path.encode())
     return result.decode() if result else ""
 
 def parse_yft(path: str) -> str:
-    """Обёртка для parse_yft"""
     result = _parse_yft(path.encode())
     return result.decode() if result else ""
 
